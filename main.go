@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"image"
-	"image/draw"
-	"image/jpeg"
 	"os"
+
+	"github.com/kiyutink/croppy/crop"
+	"github.com/kiyutink/croppy/provide"
+	"github.com/kiyutink/croppy/save"
 )
 
 func main() {
@@ -31,27 +32,12 @@ func main() {
 		return
 	}
 
-	file, err := os.Open(*s)
+	img, err := provide.LocalFile(*s)
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		panic(err)
-	}
-
-	croppedImg := image.NewRGBA(image.Rect(*x, *y, *x+*w, *y+*h))
-	draw.Draw(croppedImg, croppedImg.Bounds(), img, image.Point{X: *x, Y: *y}, draw.Src)
-	newFile, err := os.Create(*o)
-	if err != nil {
-		panic(err)
-	}
-	defer newFile.Close()
-	err = jpeg.Encode(newFile, croppedImg, nil)
-	if err != nil {
-		panic(err)
-	}
+	croppedImg := crop.Rectangle(img, crop.NewBoundingRect(*x, *y, *x+*w, *y+*h))
+	save.LocalFile(croppedImg, *o)
 
 	fmt.Println(*o)
 }
