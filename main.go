@@ -8,7 +8,6 @@ import (
 
 	"github.com/kiyutink/croppy/crop"
 	"github.com/kiyutink/croppy/provide"
-	"github.com/kiyutink/croppy/save"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	y := flag.Int("y", 0, "where to start cropping from, y coordinate")
 	w := flag.Int("w", 100, "width of the cropped area in pixels, defaults to 100")
 	h := flag.Int("h", 100, "height of the cropped area in pixels, defaults to 100")
-	out := flag.String("out", "./cropped.jpeg", "output path")
+	out := flag.String("out", "./cropped", "output path, without the extension (the input extension will be used)")
 	file := flag.String("file", "", "source path of an image")
 	url := flag.String("url", "", "remote url of an image")
 
@@ -31,15 +30,16 @@ func main() {
 
 	var img image.Image
 	var err error
+	var format string
 
 	switch {
 	case *file != "" && *url != "":
 		fmt.Fprintln(os.Stderr, "only on of --file and --url can be provided")
 		return
 	case *file != "":
-		img, err = provide.LocalFile(*file)
+		img, format, err = provide.LocalFile(*file)
 	case *url != "":
-		img, err = provide.RemoteUrl(*url)
+		img, format, err = provide.RemoteUrl(*url)
 	default:
 		fmt.Fprintln(os.Stderr, "either --file or --url has to be provided!")
 		return
@@ -49,7 +49,7 @@ func main() {
 		panic(err)
 	}
 	croppedImg := crop.Rectangle(img, crop.NewBoundingRect(*x, *y, *x+*w, *y+*h))
-	save.LocalFile(croppedImg, *out)
+	provide.SaveToLocalFile(croppedImg, *out, format)
 
 	fmt.Println(*out)
 }
